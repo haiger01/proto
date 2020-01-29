@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"syscall"
 	"unsafe"
+
+	"github.com/spectrex02/router-shakyo-go/ioctl"
 )
 
 type PFPacket struct {
-	fd   int
-	name string
+	Fd   int
+	Name string
 }
 
 func NewPFPacket(name string) (*PFPacket, error) {
@@ -18,30 +20,18 @@ func NewPFPacket(name string) (*PFPacket, error) {
 		return nil, err
 	}
 	return &PFPacket{
-		fd:   fd,
-		name: name,
+		Fd:   fd,
+		Name: name,
 	}, nil
 }
 
-func (p PFPacket) Name() string {
-	return p.name
+func (p PFPacket) String() string {
+	return p.Name
 }
 
 func (p PFPacket) Address() []byte {
-	addr, _ := getAddress(p.name)
+	addr, _ := getAddress(p.Name)
 	return addr[:6]
-}
-
-func (p *PFPacket) Read(b []byte) (int, error) {
-	return syscall.Read(p.fd, b)
-}
-
-func (p *PFPacket) Write(b []byte) (int, error) {
-	return syscall.Write(p.fd, b)
-}
-
-func (p *PFPacket) Close() error {
-	return syscall.Close(p.fd)
 }
 
 func openPFPacket(name string) (int, error) {
@@ -56,11 +46,11 @@ func openPFPacket(name string) (int, error) {
 	if err != nil {
 		return -1, err
 	}
-	// index, err := ioctl.SIOCGIFINDEX(name)
-	// if err != nil {
-	// 	syscall.Close(fd)
-	// 	return -1, err
-	// }
+	index, err := ioctl.SIOCGIFINDEX(name)
+	if err != nil {
+		syscall.Close(fd)
+		return -1, err
+	}
 	addr := &syscall.SockaddrLinklayer{
 		Protocol: protocol,
 		Ifindex:  int(index),
@@ -69,16 +59,16 @@ func openPFPacket(name string) (int, error) {
 		syscall.Close(fd)
 		return -1, err
 	}
-	// flags, err := ioctl.SIOCGIFFLAGS(name)
-	// if err != nil {
-	// 	syscall.Close(fd)
-	// 	return -1, nil
-	// }
-	// flags |= syscall.IFF_PROMISC
-	// if err := ioctl.SIOCSIFFLAGS(name, flags); err != nil {
-	// 	syscall.Close(fd)
-	// 	return -1, nil
-	// }
+	flags, err := ioctl.SIOCGIFFLAGS(name)
+	if err != nil {
+		syscall.Close(fd)
+		return -1, nil
+	}
+	flags |= syscall.IFF_PROMISC
+	if err := ioctl.SIOCSIFFLAGS(name, flags); err != nil {
+		syscall.Close(fd)
+		return -1, nil
+	}
 	return fd, nil
 }
 

@@ -64,9 +64,20 @@ func (ipaddr IPAddress) String() string {
 	return fmt.Sprintf("%d.%d.%d.%d", ipaddr[0], ipaddr[1], ipaddr[2], ipaddr[3])
 }
 
+func (ipaddr IPAddress) Bytes() []byte {
+	return ipaddr[:]
+}
+
+func Address(addr []byte) (*IPAddress, error) {
+	if len(addr) != 4 {
+		return nil, fmt.Errorf("invalid address")
+	}
+	return &IPAddress{addr[0], addr[1], addr[2], addr[3]}, nil
+}
+
 type IPProtocol uint8
 
-type IP struct {
+type IPPacket struct {
 	Header IPHeader
 	// Options   []byte
 	// Padding []byte
@@ -103,7 +114,7 @@ func (ipp IPProtocol) String() string {
 	}
 }
 
-func NewIP(data []byte) (*IP, error) {
+func NewIPPacket(data []byte) (*IPPacket, error) {
 	if len(data) < 20 {
 		return nil, fmt.Errorf("ip header is too short (%d)", len(data))
 	}
@@ -125,7 +136,7 @@ func NewIP(data []byte) (*IP, error) {
 		return nil, fmt.Errorf("ttl is zero")
 	}
 
-	packet := &IP{
+	packet := &IPPacket{
 		Header:        *header,
 		OptionPadding: make([]byte, header.VHL.IHL()-20),
 	}
@@ -136,7 +147,7 @@ func NewIP(data []byte) (*IP, error) {
 	return packet, nil
 }
 
-func (ip *IP) Serialize() ([]byte, error) {
+func (ip *IPPacket) Serialize() ([]byte, error) {
 	buf := bytes.NewBuffer(make([]byte, 20))
 	if err := binary.Write(buf, binary.BigEndian, ip.Header); err != nil {
 		return nil, err
@@ -147,6 +158,30 @@ func (ip *IP) Serialize() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (ip *IP) Handle() {
+func (ip *IPPacket) Handle() {
 	ip.Header.PrintIPHeader()
+}
+
+func (iphdr *IPHeader) DeclTTL() {
+	iphdr.TTL--
+}
+
+func BuildIPPacket(src, dst IPAddress, protocol IPProtocol, data []byte) *IPPacket {
+	//no option
+	header := &IPHeader{
+		VHL:      VerIHL(0x20),
+		TOS:      uint8(0),
+		Length:   uint16(20 + len(data)),
+		Ident:    uint16(0),
+		FlOffset: FlagsFragmentOffset(0),
+		TTL:      uint8(8),
+		Protocol: protocol,
+		Checksum: uint16(0),
+		Src:      src,
+		Dst:      dst,
+	}
+	return &IPPacket{
+		Header: *header,
+		Data:   data,
+	}
 }

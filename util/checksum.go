@@ -1,4 +1,4 @@
-package net
+package util
 
 func Checksum(data []byte, size int, init uint32) uint16 {
 	sum := init

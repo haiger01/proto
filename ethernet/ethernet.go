@@ -16,7 +16,7 @@ type EthernetHeader struct {
 	Type EtherType
 }
 
-type Ethernet struct {
+type EthernetFrame struct {
 	Header EthernetHeader
 	Data   []byte
 }
@@ -51,8 +51,8 @@ func (ethhdr EthernetHeader) PrintEthernetHeader() {
 	}
 }
 
-func NewEthernet(data []byte) (*Ethernet, error) {
-	frame := &Ethernet{}
+func NewEthernet(data []byte) (*EthernetFrame, error) {
+	frame := &EthernetFrame{}
 	header := &EthernetHeader{}
 	buf := bytes.NewBuffer(data)
 	if err := binary.Read(buf, binary.BigEndian, header); err != nil {
@@ -63,15 +63,15 @@ func NewEthernet(data []byte) (*Ethernet, error) {
 	return frame, nil
 }
 
-func (eth *Ethernet) Payload() []byte {
+func (eth *EthernetFrame) Payload() []byte {
 	return eth.Data
 }
 
-func (eth *Ethernet) Type() EtherType {
+func (eth *EthernetFrame) Type() EtherType {
 	return eth.Header.Type
 }
 
-func (eth *Ethernet) Serialize() ([]byte, error) {
+func (eth *EthernetFrame) Serialize() ([]byte, error) {
 	frame := bytes.NewBuffer(make([]byte, 0))
 	err := binary.Write(frame, binary.BigEndian, eth.Header)
 	if err != nil {
@@ -82,4 +82,16 @@ func (eth *Ethernet) Serialize() ([]byte, error) {
 		return nil, err
 	}
 	return frame.Bytes(), nil
+}
+
+func BuildEthernetFrame(src, dst HardwareAddress, typ EtherType, data []byte) *EthernetFrame {
+	header := EthernetHeader{
+		Src:  src,
+		Dst:  dst,
+		Type: typ,
+	}
+	return &EthernetFrame{
+		Header: header,
+		Data:   data,
+	}
 }

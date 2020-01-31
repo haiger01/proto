@@ -5,17 +5,18 @@ import (
 	"log"
 	"syscall"
 
-	"github.com/spectrex02/router-shakyo-go/arp"
 	"github.com/spectrex02/router-shakyo-go/ethernet"
 	"github.com/spectrex02/router-shakyo-go/ip"
 	"github.com/spectrex02/router-shakyo-go/raw"
 )
 
 type Device struct {
-	Name    string
-	Fd      int
-	Address ethernet.HardwareAddress
-	MTU     int
+	Name               string
+	Fd                 int
+	Address            ethernet.HardwareAddress
+	ProtocolAddressIP  ip.IPAddress
+	RegisteredProtocol []LinkNetProtocol
+	MTU                int
 }
 
 type Packet struct {
@@ -58,6 +59,11 @@ func (dev *Device) DeviceInfo() {
 	fmt.Println("hardware address = ", dev.Address)
 }
 
+func (dev *Device) RegisterProtocol(protocol LinkNetProtocol) error {
+	dev.RegisteredProtocol = append(dev.RegisteredProtocol, protocol)
+	return nil
+}
+
 func (dev *Device) Handle() {
 	buffer := make([]byte, dev.MTU)
 	for {
@@ -69,21 +75,14 @@ func (dev *Device) Handle() {
 		if err != nil {
 			log.Printf("%v error (read): %v", dev.Name, err)
 		}
-		switch etherFrame.Type() {
-		case ethernet.ETHER_TYPE_ARP:
-			arp, err := arp.NewARP(etherFrame.Payload())
-			if err != nil {
-				log.Printf("%v failed to encode to arp apcket: %v\n", dev.Name, err)
-				continue
+		for _, protocol := range dev.RegisteredProtocol {
+			if protocol.Type() == etherFrame.Header.Type {
+				err := protocol.Handle(etherFrame.Payload())
+				if err != nil {
+					log.Printf("%v error: %v\n", dev.Name, err)
+				}
 			}
-			arp.Handle()
-		case ethernet.ETHER_TYPE_IP:
-			ip, err := ip.NewIP(etherFrame.Payload())
-			if err != nil {
-				log.Printf("%v failed to encode to ip packet: %v\n", dev.Name, err)
-				continue
-			}
-			ip.Handle()
 		}
+
 	}
 }

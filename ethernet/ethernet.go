@@ -25,6 +25,9 @@ func (hwaddr HardwareAddress) String() string {
 	return fmt.Sprintf("%02x:%02x:%02x:%02x:%02x:%02x", hwaddr[0], hwaddr[1], hwaddr[2], hwaddr[3], hwaddr[4], hwaddr[5])
 }
 
+func (hwaddr HardwareAddress) Bytes() []byte {
+	return hwaddr[:]
+}
 func Address(data []byte) (*HardwareAddress, error) {
 	addr := &HardwareAddress{}
 	buf := bytes.NewBuffer(data)

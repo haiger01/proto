@@ -60,5 +60,5 @@ func (i *IP) Write(dst []byte, protocol interface{}, data []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	return i.Link.Write(i.Link.Dev.Address[:], ethernet.ETHER_TYPE_IP, buf)
+	return i.Link.Write(i.Link.Dev.Address().Bytes(), ethernet.ETHER_TYPE_IP, buf)
 }

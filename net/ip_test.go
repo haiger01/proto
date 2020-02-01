@@ -8,11 +8,11 @@ import (
 )
 
 func TestIPHandle(t *testing.T) {
-	dev, err := NewDevice("eth0", 1500)
+	dev, err := NewDevicePFPacket("eth0", 1500)
 	if err != nil {
 		t.Fatal(err)
 	}
-	dev.ProtocolAddressIP = ip.IPAddress{172, 22, 0, 3}
+	dev.RegisterIPAddress(ip.IPAddress{172, 22, 0, 3})
 	link := NewEthernet(dev)
 	arp := newARP(dev)
 	err = dev.RegisterProtocol(arp)

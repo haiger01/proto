@@ -8,18 +8,18 @@ import (
 )
 
 func TestICMPHandle(t *testing.T) {
-	dev, err := NewDevice("eth0", 1500)
+	dev, err := NewDeviceTun("test0", 1500)
 	if err != nil {
 		t.Fatal(err)
 	}
-	dev.ProtocolAddressIP = ip.IPAddress{172, 22, 0, 3}
+	dev.RegisterIPAddress(ip.IPAddress{172, 22, 0, 200})
 	link := NewEthernet(dev)
 	arp := newARP(dev)
 	err = dev.RegisterProtocol(arp)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ip := newIP(ip.IPAddress{172, 22, 0, 3}, link)
+	ip := newIP(ip.IPAddress{172, 22, 0, 200}, link)
 	icmp := newICMP()
 	ip.RegisterProtocol(icmp)
 	err = dev.RegisterProtocol(ip)

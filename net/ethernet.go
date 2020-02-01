@@ -3,11 +3,11 @@ package net
 import "github.com/spectrex02/router-shakyo-go/ethernet"
 
 type Ethernet struct {
-	Dev *Device
+	Dev Device
 	// Address ethernet.HardwareAddress
 }
 
-func NewEthernet(dev *Device) *Ethernet {
+func NewEthernet(dev Device) *Ethernet {
 	return &Ethernet{
 		Dev: dev,
 	}
@@ -18,7 +18,7 @@ func (e *Ethernet) Write(dst []byte, typ ethernet.EtherType, data []byte) (int, 
 	if err != nil {
 		return 0, err
 	}
-	frame := ethernet.BuildEthernetFrame(e.Dev.Address, *d, typ, data)
+	frame := ethernet.BuildEthernetFrame(e.Dev.Address(), *d, typ, data)
 	buf, err := frame.Serialize()
 	if err != nil {
 		return 0, err

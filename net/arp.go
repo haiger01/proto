@@ -11,10 +11,10 @@ import (
 type ARP struct {
 	HardwareType ethernet.EtherType
 	Table        *arp.ARPTable
-	Dev          *Device
+	Dev          Device
 }
 
-func newARP(dev *Device) *ARP {
+func newARP(dev Device) *ARP {
 	return &ARP{
 		HardwareType: ethernet.ETHER_TYPE_ARP,
 		Table:        arp.NewARPTable(),
@@ -39,7 +39,7 @@ func (a *ARP) Handle(data []byte) error {
 	if err != nil {
 		return err
 	}
-	if bytes.Equal(packet.TargetProtocolAddress, a.Dev.ProtocolAddressIP.Bytes()) {
+	if bytes.Equal(packet.TargetProtocolAddress, a.Dev.ProtocolAddressIP().Bytes()) {
 		if !mergeFlag {
 			err := a.Table.Insert(packet.SourceHardwareAddress, packet.SourceProtocolAddress, packet.Header.ProtocolType)
 			if err != nil {
@@ -62,7 +62,9 @@ func (a *ARP) Type() ethernet.EtherType {
 }
 
 func (a *ARP) ARPRequest(targetProtocolAddress []byte, protocolType arp.ProtocolType) error {
-	request, err := arp.Request(a.Dev.Address[:], a.Dev.ProtocolAddressIP[:], targetProtocolAddress, protocolType)
+	hwaddr := a.Dev.Address()
+	protoaddr := a.Dev.ProtocolAddressIP()
+	request, err := arp.Request(hwaddr[:], protoaddr[:], targetProtocolAddress, protocolType)
 	if err != nil {
 		return fmt.Errorf("failed to create ARP request")
 	}
@@ -78,7 +80,9 @@ func (a *ARP) ARPRequest(targetProtocolAddress []byte, protocolType arp.Protocol
 }
 
 func (a *ARP) ARPReply(targetHardwareAddress, targetProtocolAddress []byte, protocolType arp.ProtocolType) error {
-	reply, err := arp.Reply(a.Dev.Address[:], a.Dev.ProtocolAddressIP[:], targetHardwareAddress, targetProtocolAddress, protocolType)
+	hwaddr := a.Dev.Address()
+	protoaddr := a.Dev.ProtocolAddressIP()
+	reply, err := arp.Reply(hwaddr[:], protoaddr[:], targetHardwareAddress, targetProtocolAddress, protocolType)
 	if err != nil {
 		return fmt.Errorf("failed to create arp reply")
 	}

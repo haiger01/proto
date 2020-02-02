@@ -1,6 +1,8 @@
 package router
 
 import (
+	"fmt"
+
 	"github.com/spectrex02/router-shakyo-go/ip"
 	"github.com/spectrex02/router-shakyo-go/net"
 )
@@ -16,27 +18,53 @@ func setUp() {
 
 }
 
-func NewRouter(dev1, dev2 string, next [4]byte) (*Router, error) {
-	device1, err := net.NewDevice(dev1, 1500)
+func NewRouter(name1, name2, addr1, addr2, next string) (*Router, error) {
+	dev1, err := setUpDevice(name1, addr1)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to set up %v: %v\n", name1, err)
 	}
-	device2, err := net.NewDevice(dev2, 1500)
+	dev2, err := setUpDevice(name2, addr2)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set up %v: %v\n", name1, err)
+	}
+	nextAddr, err := ip.StrintToIPAddress(next)
 	if err != nil {
 		return nil, err
 	}
 	return &Router{
-		Device1:  device1,
-		Device2:  device2,
-		Nexthops: ip.IPAddress(next),
+		Device1:  dev1,
+		Device2:  dev2,
+		Nexthops: *nextAddr,
 	}, nil
+}
+
+func setUpDevice(name string, addr string) (net.Device, error) {
+	address, err := ip.StrintToIPAddress(addr)
+	if err != nil {
+		return nil, err
+	}
+	dev, err := net.NewDevicePFPacket(name, 1500)
+	if err != nil {
+		return nil, err
+	}
+	// link := net.NewEthernet(dev)
+	arp := net.NewARP(dev)
+	// ip := net.NewIP(*address, link)
+	// icmp := net.NewICMP()
+	err = dev.RegisterProtocol(arp)
+	if err != nil {
+		return nil, err
+	}
+	// err = ip.RegisterProtocol(icmp)
+	// if err != nil {
+	// return nil, err
+	// }
+	dev.RegisterIPAddress(*address)
+	return dev, nil
 }
 
 func (r *Router) Handle() {
 	for {
-		if r.EndFlag {
-			return
-		}
 
 	}
 }

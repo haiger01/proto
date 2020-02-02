@@ -18,6 +18,7 @@ type Tun struct {
 	protocolAddressIP  ip.IPAddress
 	registeredProtocol []LinkNetProtocol
 	MTU                int
+	buffer             chan *ethernet.EthernetFrame
 }
 
 func NewDeviceTun(name string, mtu int) (*Tun, error) {
@@ -34,6 +35,7 @@ func NewDeviceTun(name string, mtu int) (*Tun, error) {
 		name:    t.Name,
 		address: *addr,
 		MTU:     mtu,
+		buffer:  make(chan *ethernet.EthernetFrame),
 	}, nil
 }
 
@@ -87,6 +89,16 @@ func (t *Tun) Handle() {
 		if err != nil {
 			log.Printf("%v error (read): %v\n", t.name, err)
 		}
+		t.buffer <- frame
+	}
+}
+
+func (t *Tun) Next() {
+	for {
+		if t.registeredProtocol == nil {
+			panic("next leyer protocol is not registered")
+		}
+		frame := <-t.buffer
 		for _, protocol := range t.registeredProtocol {
 			if protocol.Type() == frame.Header.Type {
 				err := protocol.Handle(frame.Payload())

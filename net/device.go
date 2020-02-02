@@ -16,6 +16,7 @@ type Device interface {
 	RegisterProtocol(protocol LinkNetProtocol) error
 	DeviceInfo()
 	Handle()
+	Next()
 }
 
 type Buffer struct {

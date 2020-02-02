@@ -33,4 +33,5 @@ func TestIPHandle(t *testing.T) {
 		t.Fatal(err)
 	}
 	dev.Handle()
+	dev.Next()
 }

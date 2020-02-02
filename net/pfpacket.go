@@ -17,7 +17,7 @@ type PFPacket struct {
 	protocolAddressIP  ip.IPAddress
 	registeredProtocol []LinkNetProtocol
 	MTU                int
-	buffer             chan Buffer
+	buffer             chan *ethernet.EthernetFrame
 }
 
 func NewDevicePFPacket(name string, mtu int) (*PFPacket, error) {
@@ -29,11 +29,13 @@ func NewDevicePFPacket(name string, mtu int) (*PFPacket, error) {
 	if err != nil {
 		return nil, err
 	}
+	buf := make(chan *ethernet.EthernetFrame)
 	return &PFPacket{
 		fd:      p.Fd,
 		name:    p.Name,
 		address: *addr,
 		MTU:     mtu,
+		buffer:  buf,
 	}, nil
 }
 
@@ -88,6 +90,16 @@ func (p *PFPacket) Handle() {
 		if err != nil {
 			log.Printf("%v error (read): %v\n", p.name, err)
 		}
+		p.buffer <- frame
+	}
+}
+
+func (p *PFPacket) Next() {
+	for {
+		if p.registeredProtocol == nil {
+			panic("next layer protocol is not registered")
+		}
+		frame := <-p.buffer
 		for _, protocol := range p.registeredProtocol {
 			if protocol.Type() == frame.Header.Type {
 				err := protocol.Handle(frame.Payload())
@@ -99,6 +111,13 @@ func (p *PFPacket) Handle() {
 	}
 }
 
-func (p *PFPacket) Socket() []byte {
-
+func (p *PFPacket) testListen() {
+	fmt.Println("----------test listen----------")
+	frame := <-p.buffer
+	fmt.Println("src:", frame.Header.Src)
+	fmt.Println("dst:", frame.Header.Dst)
 }
+
+// func (p *PFPacket) Socket() []byte {
+//
+// }

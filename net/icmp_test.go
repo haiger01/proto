@@ -33,4 +33,5 @@ func TestICMPHandle(t *testing.T) {
 		t.Fatal(err)
 	}
 	dev.Handle()
+	dev.Next()
 }

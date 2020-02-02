@@ -57,6 +57,7 @@ func TestHandle(t *testing.T) {
 	dev.DeviceInfo()
 	defer dev.Close()
 	dev.Handle()
+	dev.Next()
 }
 
 func TestListen(t *testing.T) {

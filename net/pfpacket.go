@@ -17,6 +17,7 @@ type PFPacket struct {
 	protocolAddressIP  ip.IPAddress
 	registeredProtocol []LinkNetProtocol
 	MTU                int
+	buffer             chan Buffer
 }
 
 func NewDevicePFPacket(name string, mtu int) (*PFPacket, error) {
@@ -96,4 +97,8 @@ func (p *PFPacket) Handle() {
 			}
 		}
 	}
+}
+
+func (p *PFPacket) Socket() []byte {
+
 }

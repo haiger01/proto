@@ -11,7 +11,7 @@ type ICMP struct {
 	IPProtocolType ip.IPProtocol
 }
 
-func newICMP() *ICMP {
+func NewICMP() *ICMP {
 	return &ICMP{
 		IPProtocolType: ip.IPICMPv4Protocol,
 	}

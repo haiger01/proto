@@ -6,8 +6,8 @@ import (
 )
 
 type Router struct {
-	Device1  *net.Device
-	Device2  *net.Device
+	Device1  net.Device
+	Device2  net.Device
 	Nexthops ip.IPAddress
 	EndFlag  bool
 }

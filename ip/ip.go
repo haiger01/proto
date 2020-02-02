@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 /*
@@ -184,4 +186,17 @@ func BuildIPPacket(src, dst IPAddress, protocol IPProtocol, data []byte) *IPPack
 		Header: *header,
 		Data:   data,
 	}
+}
+
+func StrintToIPAddress(addr string) (*IPAddress, error) {
+	s := strings.Split(addr, ".")
+	var address []byte
+	for _, v := range s {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, err
+		}
+		address = append(address, byte(n))
+	}
+	return Address(address)
 }

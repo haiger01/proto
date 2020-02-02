@@ -14,7 +14,7 @@ type ARP struct {
 	Dev          Device
 }
 
-func newARP(dev Device) *ARP {
+func NewARP(dev Device) *ARP {
 	return &ARP{
 		HardwareType: ethernet.ETHER_TYPE_ARP,
 		Table:        arp.NewARPTable(),

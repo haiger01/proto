@@ -17,3 +17,9 @@ type Device interface {
 	DeviceInfo()
 	Handle()
 }
+
+type Buffer struct {
+	Data []byte
+	Src  ethernet.HardwareAddress
+	Dst  ethernet.HardwareAddress
+}

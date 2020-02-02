@@ -14,7 +14,7 @@ type IP struct {
 	Link               *Ethernet
 }
 
-func newIP(addr ip.IPAddress, link *Ethernet) *IP {
+func NewIP(addr ip.IPAddress, link *Ethernet) *IP {
 	return &IP{
 		Address:      addr,
 		HardwareType: ethernet.ETHER_TYPE_IP,

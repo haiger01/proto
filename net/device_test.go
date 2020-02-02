@@ -43,12 +43,12 @@ func TestHandle(t *testing.T) {
 	}
 	dev.RegisterIPAddress(ip.IPAddress{172, 22, 0, 3})
 	link := NewEthernet(dev)
-	arp := newARP(dev)
+	arp := NewARP(dev)
 	err = dev.RegisterProtocol(arp)
 	if err != nil {
 		t.Fatal(err)
 	}
-	ip := newIP(ip.IPAddress{172, 22, 0, 3}, link)
+	ip := NewIP(ip.IPAddress{172, 22, 0, 3}, link)
 	err = dev.RegisterProtocol(ip)
 	if err != nil {
 		t.Fatal(err)

@@ -8,9 +8,9 @@ services:
         volumes: 
             - ./:/root/go/src/github.com/spectrex02/router-shakyo-go
 
-    host:
-        build: ./Docker/centos
-        container_name: host
-        # privileged: true
-        tty: true
+    # host:
+    #     build: ./Docker/centos
+    #     container_name: host
+    #     # privileged: true
+    #     tty: true
 

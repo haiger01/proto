@@ -40,9 +40,11 @@ func (at *ARPTable) Search(protoaddr []byte) *Entry {
 	defer at.Mutex.RUnlock()
 	for _, e := range at.Entrys {
 		if bytes.Equal(e.ProtocolAddress, protoaddr) {
+			// fmt.Printf("[info] found entry (%s)\n", printProtocolAddress(protoaddr))
 			return e
 		}
 	}
+	// fmt.Println("[info] not found the entry")
 	return nil
 }
 
@@ -59,6 +61,7 @@ func (at *ARPTable) Insert(hwaddr, protoaddr []byte, typ ProtocolType) error {
 	}
 	e := NewEntry(hwaddr, protoaddr, typ)
 	at.Entrys = append(at.Entrys, e)
+	// fmt.Printf(">>>>>>>>>>>>>>>>>>>insert into arp table [%v -> %v]\n", hwaddr, protoaddr)
 	return nil
 }
 
@@ -78,8 +81,9 @@ func (at *ARPTable) Update(hwaddr, protoaddr []byte) (bool, error) {
 func (at *ARPTable) Show() {
 	fmt.Println("---------------arp table---------------")
 	for _, e := range at.Entrys {
-		fmt.Printf("hwaddr= %s", printHadrwareAddress(e.HardwareAddress))
-		fmt.Printf("protoaddr=%s", printProtocolAddress(e.ProtocolAddress))
+		fmt.Printf("hwaddr= %s\n", printHadrwareAddress(e.HardwareAddress))
+		fmt.Printf("protoaddr=%s\n", printProtocolAddress(e.ProtocolAddress))
 		fmt.Printf("time=%v\n", e.TimeStamp)
 	}
+	fmt.Println("---------------------------------------")
 }

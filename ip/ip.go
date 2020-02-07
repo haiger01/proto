@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/spectrex02/router-shakyo-go/util"
 )
 
 /*
@@ -61,6 +63,10 @@ func (fo FlagsFragmentOffset) FragmentOffset() uint16 {
 }
 
 type IPAddress [4]byte
+
+func NewIPAddress(addr []byte) IPAddress {
+	return IPAddress{addr[0], addr[1], addr[2], addr[3]}
+}
 
 func (ipaddr IPAddress) String() string {
 	return fmt.Sprintf("%d.%d.%d.%d", ipaddr[0], ipaddr[1], ipaddr[2], ipaddr[3])
@@ -125,6 +131,7 @@ func NewIPPacket(data []byte) (*IPPacket, error) {
 	if err := binary.Read(buf, binary.BigEndian, header); err != nil {
 		return nil, fmt.Errorf("encoding error: %v", err)
 	}
+	// header.PrintIPHeader()
 	if header.VHL.Version() != uint8(4) {
 		return nil, fmt.Errorf("ip version is not ipv4")
 	}
@@ -137,7 +144,12 @@ func NewIPPacket(data []byte) (*IPPacket, error) {
 	if int(header.TTL) == 0 {
 		return nil, fmt.Errorf("ttl is zero")
 	}
-
+	headerLength := int(header.VHL.IHL() << 2)
+	// sum := util.Checksum2(data, headerLength, 0)
+	// fmt.Printf("checksum [%x]:[%x]\n", sum, header.Checksum)
+	// if sum != header.Checksum {
+	// return nil, fmt.Errorf("invalid checksum")
+	// }
 	packet := &IPPacket{
 		Header:        *header,
 		OptionPadding: make([]byte, header.VHL.IHL()-20),
@@ -145,12 +157,13 @@ func NewIPPacket(data []byte) (*IPPacket, error) {
 	if err := binary.Read(buf, binary.BigEndian, packet.OptionPadding); err != nil {
 		return nil, fmt.Errorf("error making option and padding: %v", err)
 	}
-	packet.Data = buf.Bytes()
+	// packet.Data = buf.Bytes()
+	packet.Data = data[headerLength:int(packet.Header.Length)]
 	return packet, nil
 }
 
 func (ip *IPPacket) Serialize() ([]byte, error) {
-	buf := bytes.NewBuffer(make([]byte, 20))
+	buf := bytes.NewBuffer(make([]byte, 0))
 	if err := binary.Write(buf, binary.BigEndian, ip.Header); err != nil {
 		return nil, err
 	}
@@ -166,6 +179,24 @@ func (ip *IPPacket) Handle() {
 
 func (iphdr *IPHeader) DeclTTL() {
 	iphdr.TTL--
+}
+
+// func (ip *IPPacket) CalculateChecksum() bool {
+
+// }
+
+func (ip *IPPacket) ReCalculateChecksum() error {
+	// heavy
+	ip.Header.Checksum = uint16(0)
+	buf, err := ip.Serialize()
+	if err != nil {
+		return err
+	}
+	headerLength := int(ip.Header.VHL.IHL() << 2)
+	sum := util.Checksum2(buf, headerLength, 0)
+	// fmt.Printf("recalculate checksum:%x\n", sum)
+	ip.Header.Checksum = sum
+	return nil
 }
 
 func BuildIPPacket(src, dst IPAddress, protocol IPProtocol, data []byte) *IPPacket {
@@ -188,7 +219,7 @@ func BuildIPPacket(src, dst IPAddress, protocol IPProtocol, data []byte) *IPPack
 	}
 }
 
-func StrintToIPAddress(addr string) (*IPAddress, error) {
+func StringToIPAddress(addr string) (*IPAddress, error) {
 	s := strings.Split(addr, ".")
 	var address []byte
 	for _, v := range s {

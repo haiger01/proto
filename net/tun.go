@@ -15,7 +15,7 @@ type Tun struct {
 	file               io.ReadWriteCloser
 	name               string
 	address            ethernet.HardwareAddress
-	protocolAddressIP  ip.IPAddress
+	netInfo            ip.IPSubnetMask
 	registeredProtocol []LinkNetProtocol
 	MTU                int
 	buffer             chan *ethernet.EthernetFrame
@@ -64,12 +64,29 @@ func (t *Tun) Name() string {
 	return t.name
 }
 
-func (t *Tun) ProtocolAddressIP() ip.IPAddress {
-	return t.protocolAddressIP
+func (t *Tun) NetInfo() ip.IPSubnetMask {
+	return t.netInfo
 }
 
-func (t *Tun) RegisterIPAddress(addr ip.IPAddress) {
-	t.protocolAddressIP = addr
+func (t *Tun) IPAddress() ip.IPAddress {
+	return t.netInfo.Address
+}
+
+func (t *Tun) Subnet() ip.IPAddress {
+	return t.netInfo.Subnet
+}
+
+func (t *Tun) Netmask() ip.IPAddress {
+	return t.netInfo.Netmask
+}
+
+func (t *Tun) RegisterNetInfo(info string) error {
+	nInfo, err := ip.NewIPSubnetMask(info)
+	if err != nil {
+		return err
+	}
+	t.netInfo = *nInfo
+	return nil
 }
 
 func (t *Tun) DeviceInfo() {
@@ -108,4 +125,12 @@ func (t *Tun) Next() {
 			}
 		}
 	}
+}
+
+func (t *Tun) Buffer() chan *ethernet.EthernetFrame {
+	return t.buffer
+}
+
+func (t *Tun) RegisteredProtocol() []LinkNetProtocol {
+	return t.registeredProtocol
 }

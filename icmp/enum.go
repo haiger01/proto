@@ -1,11 +1,11 @@
 package icmp
 
 const (
-	EchoReply              ICMPType = 8
+	EchoReply              ICMPType = 0
 	DestinationUnreachable ICMPType = 3
 	SourceQuench           ICMPType = 4
 	Redirect               ICMPType = 5
-	Echo                   ICMPType = 0
+	Echo                   ICMPType = 8
 	RouterAdvertisement    ICMPType = 9
 	RouterSolicitation     ICMPType = 10
 	TimeExceeded           ICMPType = 11

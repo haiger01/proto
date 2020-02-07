@@ -9,14 +9,18 @@ import (
 
 type IP struct {
 	RegisteredProtocol []NetTransProtocol
-	Address            ip.IPAddress
+	NetInfo            ip.IPSubnetMask
 	HardwareType       ethernet.EtherType
 	Link               *Ethernet
 }
 
-func NewIP(addr ip.IPAddress, link *Ethernet) *IP {
+func NewIP(ninfo string, link *Ethernet) *IP {
+	info, err := ip.NewIPSubnetMask(ninfo)
+	if err != nil {
+		panic(err)
+	}
 	return &IP{
-		Address:      addr,
+		NetInfo:      *info,
 		HardwareType: ethernet.ETHER_TYPE_IP,
 		Link:         link,
 	}
@@ -36,8 +40,8 @@ func (i *IP) Handle(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("failed to create ip packet")
 	}
-	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-	packet.Header.PrintIPHeader()
+	// fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+	// packet.Header.PrintIPHeader()
 	if i.RegisteredProtocol == nil {
 		return fmt.Errorf("next protocols is not registered")
 	}
@@ -55,7 +59,7 @@ func (i *IP) Write(dst []byte, protocol interface{}, data []byte) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	packet := ip.BuildIPPacket(i.Address, *d, protocol.(ip.IPProtocol), data)
+	packet := ip.BuildIPPacket(i.NetInfo.Address, *d, protocol.(ip.IPProtocol), data)
 	buf, err := packet.Serialize()
 	if err != nil {
 		return 0, err

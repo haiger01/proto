@@ -14,7 +14,7 @@ type PFPacket struct {
 	fd                 int
 	name               string
 	address            ethernet.HardwareAddress
-	protocolAddressIP  ip.IPAddress
+	netInfo            ip.IPSubnetMask
 	registeredProtocol []LinkNetProtocol
 	MTU                int
 	buffer             chan *ethernet.EthernetFrame
@@ -59,12 +59,29 @@ func (p *PFPacket) Address() ethernet.HardwareAddress {
 	return p.address
 }
 
-func (p *PFPacket) ProtocolAddressIP() ip.IPAddress {
-	return p.protocolAddressIP
+func (p *PFPacket) NetInfo() ip.IPSubnetMask {
+	return p.netInfo
 }
 
-func (p *PFPacket) RegisterIPAddress(addr ip.IPAddress) {
-	p.protocolAddressIP = addr
+func (p *PFPacket) IPAddress() ip.IPAddress {
+	return p.netInfo.Address
+}
+
+func (p *PFPacket) Subnet() ip.IPAddress {
+	return p.netInfo.Subnet
+}
+
+func (p *PFPacket) Netmask() ip.IPAddress {
+	return p.netInfo.Netmask
+}
+
+func (p *PFPacket) RegisterNetInfo(info string) error {
+	nInfo, err := ip.NewIPSubnetMask(info)
+	if err != nil {
+		return err
+	}
+	p.netInfo = *nInfo
+	return nil
 }
 
 func (p *PFPacket) DeviceInfo() {
@@ -81,6 +98,7 @@ func (p *PFPacket) RegisterProtocol(protocol LinkNetProtocol) error {
 
 func (p *PFPacket) Handle() {
 	buffer := make([]byte, p.MTU)
+	// fmt.Printf("%v start handling packet", p.name)
 	for {
 		_, err := p.Read(buffer)
 		if err != nil {
@@ -99,7 +117,8 @@ func (p *PFPacket) Next() {
 		if p.registeredProtocol == nil {
 			panic("next layer protocol is not registered")
 		}
-		frame := <-p.buffer
+		// frame := <-p.buffer
+		frame := <-p.Buffer()
 		for _, protocol := range p.registeredProtocol {
 			if protocol.Type() == frame.Header.Type {
 				err := protocol.Handle(frame.Payload())
@@ -111,6 +130,11 @@ func (p *PFPacket) Next() {
 	}
 }
 
+// これは絶対スループット下がる
+func (p *PFPacket) Buffer() chan *ethernet.EthernetFrame {
+	return p.buffer
+}
+
 func (p *PFPacket) testListen() {
 	fmt.Println("----------test listen----------")
 	frame := <-p.buffer
@@ -118,6 +142,6 @@ func (p *PFPacket) testListen() {
 	fmt.Println("dst:", frame.Header.Dst)
 }
 
-// func (p *PFPacket) Socket() []byte {
-//
-// }
+func (p *PFPacket) RegisteredProtocol() []LinkNetProtocol {
+	return p.registeredProtocol
+}

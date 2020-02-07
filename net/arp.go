@@ -27,8 +27,8 @@ func (a *ARP) Handle(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("failed to create ARP packet")
 	}
-	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-	packet.String()
+	// fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+	// packet.String()
 	if packet.Header.HardwareType != arp.HARDWARE_ETHERNET {
 		return fmt.Errorf("invalid hardware type")
 	}
@@ -39,7 +39,9 @@ func (a *ARP) Handle(data []byte) error {
 	if err != nil {
 		return err
 	}
-	if bytes.Equal(packet.TargetProtocolAddress, a.Dev.ProtocolAddressIP().Bytes()) {
+	// fmt.Println("my protocol address:", a.Dev.IPAddress().String())
+	// fmt.Println("target protocol address:", ip.NewIPAddress(packet.TargetProtocolAddress).String())
+	if bytes.Equal(packet.TargetProtocolAddress, a.Dev.IPAddress().Bytes()) {
 		if !mergeFlag {
 			err := a.Table.Insert(packet.SourceHardwareAddress, packet.SourceProtocolAddress, packet.Header.ProtocolType)
 			if err != nil {
@@ -63,7 +65,7 @@ func (a *ARP) Type() ethernet.EtherType {
 
 func (a *ARP) ARPRequest(targetProtocolAddress []byte, protocolType arp.ProtocolType) error {
 	hwaddr := a.Dev.Address()
-	protoaddr := a.Dev.ProtocolAddressIP()
+	protoaddr := a.Dev.IPAddress()
 	request, err := arp.Request(hwaddr[:], protoaddr[:], targetProtocolAddress, protocolType)
 	if err != nil {
 		return fmt.Errorf("failed to create ARP request")
@@ -72,30 +74,50 @@ func (a *ARP) ARPRequest(targetProtocolAddress []byte, protocolType arp.Protocol
 	if err != nil {
 		return fmt.Errorf("failed to serialize")
 	}
-	_, err = a.Dev.Write(buf)
+	// create ethernet frame
+	frame := ethernet.BuildEthernetFrame(a.Dev.Address(), ethernet.BroadcastAddress, ethernet.ETHER_TYPE_ARP, buf)
+	// frame.Header.PrintEthernetHeader()
+	data, err := frame.Serialize()
+	if err != nil {
+		return err
+	}
+	_, err = a.Dev.Write(data)
 	if err != nil {
 		return fmt.Errorf("failed to send ARP request")
 	}
+	fmt.Println("[info]request send >>")
+	// request.String()
 	return nil
 }
 
 func (a *ARP) ARPReply(targetHardwareAddress, targetProtocolAddress []byte, protocolType arp.ProtocolType) error {
 	hwaddr := a.Dev.Address()
-	protoaddr := a.Dev.ProtocolAddressIP()
+	protoaddr := a.Dev.IPAddress()
 	reply, err := arp.Reply(hwaddr[:], protoaddr[:], targetHardwareAddress, targetProtocolAddress, protocolType)
 	if err != nil {
 		return fmt.Errorf("failed to create arp reply")
 	}
-	fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>")
-	reply.String()
+	// fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>")
+	// reply.String()
 	buf, err := reply.Serialize()
 	if err != nil {
 		return fmt.Errorf("failed to serialize")
 	}
-	_, err = a.Dev.Write(buf)
+	dstHwaddr, err := ethernet.Address(targetHardwareAddress)
+	if err != nil {
+		return err
+	}
+	frame := ethernet.BuildEthernetFrame(a.Dev.Address(), *dstHwaddr, ethernet.ETHER_TYPE_ARP, buf)
+	// frame.Header.PrintEthernetHeader()
+	data, err := frame.Serialize()
+	if err != nil {
+		return err
+	}
+	_, err = a.Dev.Write(data)
 	if err != nil {
 		return fmt.Errorf("failed to send arp reply")
 	}
+	fmt.Println("[info]reply send >>")
 	return nil
 }
 

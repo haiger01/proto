@@ -52,6 +52,7 @@ func (ethhdr EthernetHeader) PrintEthernetHeader() {
 	default:
 		fmt.Printf("(UNKNOWN)\n")
 	}
+	fmt.Println("----------------------------------")
 }
 
 func NewEthernet(data []byte) (*EthernetFrame, error) {

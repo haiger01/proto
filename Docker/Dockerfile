@@ -1,6 +1,6 @@
 FROM centos:latest
 RUN yum update -y && \
-    yum install -y vim git wget
+    yum install -y vim git wget tcpdump
 RUN wget https://dl.google.com/go/go1.13.6.linux-amd64.tar.gz 
 RUN tar -C /usr/local/ -zxf go1.13.6.linux-amd64.tar.gz && \
     rm go1.13.6.linux-amd64.tar.gz && \

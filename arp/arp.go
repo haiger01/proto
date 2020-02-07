@@ -82,7 +82,7 @@ func NewARPPacket(data []byte) (*ARPPacket, error) {
 }
 
 func (arp *ARPPacket) Serialize() ([]byte, error) {
-	packet := bytes.NewBuffer(make([]byte, 28))
+	packet := bytes.NewBuffer(make([]byte, 0))
 	if err := binary.Write(packet, binary.BigEndian, arp.Header); err != nil {
 		return nil, err
 	}

@@ -10,13 +10,19 @@ type Device interface {
 	Write(data []byte) (int, error)
 	Close() error
 	Address() ethernet.HardwareAddress
-	ProtocolAddressIP() ip.IPAddress
+	// ProtocolAddressIP() ip.IPAddress
 	Name() string
-	RegisterIPAddress(addr ip.IPAddress)
+	NetInfo() ip.IPSubnetMask
+	IPAddress() ip.IPAddress
+	Subnet() ip.IPAddress
+	Netmask() ip.IPAddress
+	RegisterNetInfo(info string) error
 	RegisterProtocol(protocol LinkNetProtocol) error
+	RegisteredProtocol() []LinkNetProtocol
 	DeviceInfo()
 	Handle()
 	Next()
+	Buffer() chan *ethernet.EthernetFrame
 }
 
 type Buffer struct {

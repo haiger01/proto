@@ -5,9 +5,9 @@ import (
 	"log"
 	"syscall"
 
-	"github.com/spectrex02/router-shakyo-go/ethernet"
-	"github.com/spectrex02/router-shakyo-go/ip"
-	"github.com/spectrex02/router-shakyo-go/raw"
+	"github.com/spectrex02/proto/ethernet"
+	"github.com/spectrex02/proto/ip"
+	"github.com/spectrex02/proto/raw"
 )
 
 type PFPacket struct {

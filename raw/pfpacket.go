@@ -6,7 +6,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/spectrex02/router-shakyo-go/ioctl"
+	"github.com/spectrex02/proto/ioctl"
 )
 
 type PFPacket struct {

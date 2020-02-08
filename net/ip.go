@@ -3,8 +3,8 @@ package net
 import (
 	"fmt"
 
-	"github.com/spectrex02/router-shakyo-go/ethernet"
-	"github.com/spectrex02/router-shakyo-go/ip"
+	"github.com/spectrex02/proto/ethernet"
+	"github.com/spectrex02/proto/ip"
 )
 
 type IP struct {

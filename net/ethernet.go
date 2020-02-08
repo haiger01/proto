@@ -1,6 +1,6 @@
 package net
 
-import "github.com/spectrex02/router-shakyo-go/ethernet"
+import "github.com/spectrex02/proto/ethernet"
 
 type Ethernet struct {
 	Dev Device

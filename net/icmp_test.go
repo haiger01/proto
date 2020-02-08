@@ -3,8 +3,8 @@ package net
 import (
 	"testing"
 
-	"github.com/spectrex02/router-shakyo-go/ip"
-	"github.com/spectrex02/router-shakyo-go/util"
+	"github.com/spectrex02/proto/ip"
+	"github.com/spectrex02/proto/util"
 )
 
 func TestICMPHandle(t *testing.T) {

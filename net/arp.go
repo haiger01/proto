@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/spectrex02/router-shakyo-go/arp"
-	"github.com/spectrex02/router-shakyo-go/ethernet"
+	"github.com/spectrex02/proto/arp"
+	"github.com/spectrex02/proto/ethernet"
 )
 
 type ARP struct {

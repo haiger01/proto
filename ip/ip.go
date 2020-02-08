@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/spectrex02/router-shakyo-go/util"
+	"github.com/spectrex02/proto/util"
 )
 
 /*

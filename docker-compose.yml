@@ -6,7 +6,7 @@ services:
         privileged: true
         tty: true
         volumes: 
-            - ./:/root/go/src/github.com/spectrex02/router-shakyo-go
+            - ./:/root/go/src/github.com/spectrex02/proto
 
     # host:
     #     build: ./Docker/centos

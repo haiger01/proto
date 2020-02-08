@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/spectrex02/router-shakyo-go/ethernet"
+	"github.com/spectrex02/proto/ethernet"
 )
 
 type ARPHeader struct {

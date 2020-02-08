@@ -6,7 +6,7 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/spectrex02/router-shakyo-go/ioctl"
+	"github.com/spectrex02/proto/ioctl"
 )
 
 const device = "/dev/net/tun"

@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/spectrex02/router-shakyo-go/util"
+	"github.com/spectrex02/proto/util"
 )
 
 type ICMPHeader struct {

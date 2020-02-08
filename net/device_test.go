@@ -4,8 +4,8 @@ import (
 	"log"
 	"testing"
 
-	"github.com/spectrex02/router-shakyo-go/ethernet"
-	"github.com/spectrex02/router-shakyo-go/ip"
+	"github.com/spectrex02/proto/ethernet"
+	"github.com/spectrex02/proto/ip"
 )
 
 func TestNewDevice(t *testing.T) {

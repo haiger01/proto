@@ -17,6 +17,5 @@ type NetTransProtocol interface {
 	Write(dstAddress []byte, protocol interface{}, data []byte) (int, error)
 }
 
-// type LinkProtocol interface {
-
-// }
+type ApplicationProtocol interface {
+}

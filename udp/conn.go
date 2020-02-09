@@ -13,7 +13,7 @@ import (
 
 type Conn struct {
 	peer  *Address // remote address
-	entry *Entry
+	entry *Entry   // Address field in entry fileld has my address and port info
 }
 
 type Entry struct {
@@ -108,3 +108,53 @@ func (t *Table) getAvailablePort(addr ip.IPAddress) uint16 {
 	}
 	return 0
 }
+
+func (conn *Conn) Port() uint16 {
+	return conn.peer.Port
+}
+
+func (conn *Conn) Address() ip.IPAddress {
+	return conn.peer.Address.IPAddress
+}
+
+func (conn *Conn) Peer() *Address {
+	return conn.peer
+}
+
+func (conn *Conn) Entry() *Entry {
+	return conn.entry
+}
+func (conn *Conn) Close() error {
+	return nil
+}
+
+func (conn *Conn) Read(buf []byte) (int, error) {
+	if conn.peer == nil {
+		return -1, fmt.Errorf("invalid connection")
+	}
+	len, _, err := conn.ReadFrom(buf)
+	if err != nil {
+		return -1, fmt.Errorf("failed to read")
+	}
+	return len, nil
+}
+
+func (conn *Conn) ReadFrom(buf []byte) (int, *Address, error) {
+	select {
+	case b := <-conn.entry.Queue:
+		len := copy(buf, b.data)
+		peer := &Address{
+			IPAddress: b.address,
+			Port:      b.port,
+		}
+		return len, peer, nil
+	}
+}
+
+// func (conn *Conn) Write(buf []byte) (int, error) {
+//
+// }
+
+// func (conn *Conn) WriteTo(buf []byte, addr *Address) (int, error) {
+//
+// }

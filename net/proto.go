@@ -5,7 +5,7 @@ import (
 )
 
 func Run(name, addr string) (context.Context, error) {
-	ctx, dev, err := setUp(name, addr)
+	ctx, dev, err := SetUp(name, addr)
 	if err != nil {
 		return nil, err
 	}
@@ -16,7 +16,7 @@ func Run(name, addr string) (context.Context, error) {
 	return ctx, nil
 }
 
-func setUp(name, addr string) (context.Context, Device, error) {
+func SetUp(name, addr string) (context.Context, Device, error) {
 	// ctx := context.Background()
 	dev, err := NewDevicePFPacket(name, 1500)
 	if err != nil {

@@ -202,7 +202,7 @@ func (ip *IPPacket) ReCalculateChecksum() error {
 func BuildIPPacket(src, dst IPAddress, protocol IPProtocol, data []byte) *IPPacket {
 	//no option
 	header := &IPHeader{
-		VHL:      VerIHL(0x20),
+		VHL:      VerIHL(0x45),
 		TOS:      uint8(0),
 		Length:   uint16(20 + len(data)),
 		Ident:    uint16(0),

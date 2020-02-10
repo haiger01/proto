@@ -21,7 +21,7 @@ func (ic *ICMP) Type() ip.IPProtocol {
 	return ic.IPProtocolType
 }
 
-func (ic *ICMP) Handle(dst []byte, protocol LinkNetProtocol, data []byte) error {
+func (ic *ICMP) Handle(src, dst []byte, protocol LinkNetProtocol, data []byte) error {
 	packet, err := icmp.NewICMPPacket(data)
 	if err != nil {
 		return fmt.Errorf("encoding error: %v", err)

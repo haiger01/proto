@@ -13,7 +13,7 @@ type LinkNetProtocol interface {
 
 type NetTransProtocol interface {
 	Type() ip.IPProtocol
-	Handle(dst []byte, protocol LinkNetProtocol, data []byte) error
+	Handle(src, dst []byte, protocol LinkNetProtocol, data []byte) error
 	Write(dstAddress []byte, protocol interface{}, data []byte) (int, error)
 }
 

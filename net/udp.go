@@ -29,11 +29,14 @@ func (u *UDP) Type() ip.IPProtocol {
 
 // Handle(dst []byte, protocol LinkNetProtocol data []byte) error
 // dst is destination address
-func (u *UDP) Handle(dst []byte, protocol LinkNetProtocol, data []byte) error {
+func (u *UDP) Handle(src, dst []byte, protocol LinkNetProtocol, data []byte) error {
+	fmt.Println("------------------------------udp handling--------------------")
 	datagram, err := udp.NewUDPDatagram(data)
 	if err != nil {
 		return err
 	}
+	// datagram.Header.PrintUDPHeader()
+	datagram.PrintUDPDatagram()
 	a, err := ip.Address(dst)
 	if err != nil {
 		return err
@@ -44,11 +47,12 @@ func (u *UDP) Handle(dst []byte, protocol LinkNetProtocol, data []byte) error {
 	}
 	entry := u.Table.Search(addr)
 	if entry == nil {
-		return fmt.Errorf("port(%v) is unreachable", entry.Address.Port)
+		return fmt.Errorf("port is unreachable(%s:%d)\n", addr.String(), addr.Port)
 	}
 	buf := udp.NewBuffer(addr.IPAddress, datagram.Header.DestinationPort, datagram.Data)
 	select {
 	case entry.Queue <- buf:
+		fmt.Println(" <- in udp queue")
 		return nil
 	default:
 		return fmt.Errorf("failed to handle")
@@ -67,10 +71,12 @@ type UDPConn struct {
 	iface IP
 }
 
-func NewUDPConn(u *UDP, remote *udp.Address) (*UDPConn, error) {
-	local := &udp.Address{
-		IPAddress: u.Iface.Address(),
-		Port:      0,
+func NewUDPConn(u *UDP, local, remote *udp.Address) (*UDPConn, error) {
+	if local == nil {
+		local = &udp.Address{
+			IPAddress: u.Iface.Address(),
+			Port:      0,
+		}
 	}
 	entry, err := u.Table.Add(local)
 	if err != nil {
@@ -86,6 +92,10 @@ func (uc *UDPConn) Read(b []byte) (int, error) {
 	return uc.conn.Read(b)
 }
 
+func (uc *UDPConn) ReadFrom(b []byte) (int, *udp.Address, error) {
+	return uc.conn.ReadFrom(b)
+}
+
 func (uc *UDPConn) Write(b []byte) (int, error) {
 	return uc.WriteTo(b, *uc.conn.Peer())
 }
@@ -95,6 +105,8 @@ func (uc *UDPConn) WriteTo(b []byte, dstAddr udp.Address) (int, error) {
 	if err != nil {
 		return -1, fmt.Errorf("failed to write: %v\n", err)
 	}
+	// datagram.Header.PrintUDPHeader()
+	datagram.PrintUDPDatagram()
 	data, err := datagram.Serialize()
 	if err != nil {
 		return -1, fmt.Errorf("failed to write: %v\n", err)
@@ -124,17 +136,24 @@ func DialUDP(ctx context.Context, addr string) (*UDPConn, error) {
 	// return nil, fmt.Errorf("udp is not registered")
 	// }
 	u := ctx.Value("udp").(*UDP)
-	return NewUDPConn(u, peer)
+	return NewUDPConn(u, nil, peer)
 }
 
-func ListenUDP(ctx context.Context, addr *udp.Address) (*UDPConn, error) {
+func ListenUDP(ctx context.Context, addr string) (*UDPConn, error) {
 	// addr is listen port
-	var udp *UDP
+	var u *UDP
 	switch i := ctx.Value("udp").(type) {
-	case UDP:
-		udp = &i
+	case *UDP:
+		u = i
 	default:
 		return nil, fmt.Errorf("udp is not registered")
 	}
-	return NewUDPConn(udp, nil)
+	a, port, err := util.ParseAddressAndPort(addr)
+	if err != nil {
+		return nil, err
+	}
+	ipaddr, err := ip.Address(a)
+	peer := &udp.Address{IPAddress: *ipaddr, Port: port}
+
+	return NewUDPConn(u, peer, nil)
 }

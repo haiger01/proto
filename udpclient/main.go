@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/spectrex02/proto/net"
+	"github.com/spectrex02/proto/util"
 )
 
 // var (
@@ -22,21 +23,28 @@ func main() {
 	name := "client_veth0"
 	addr := "192.168.0.3/24"
 	fmt.Printf("device[%s] start\n", name)
-	// err := util.DisableIPForward()
-	// if err != nil {
-	// panic(err)
-	// }
-	ctx, err := net.Run(name, addr)
+	err := util.DisableIPForward()
 	if err != nil {
 		panic(err)
 	}
+	// ctx, err := net.Run(name, addr)
+	ctx, dev, err := net.SetUp(name, addr)
+	dev.DeviceInfo()
+	// defer dev.Close()
+	// dev.Handle()
+	// go dev.Next()
+	// if err != nil {
+	// panic(err)
+	// }
 	// conn, err := net.Dial("udp", "192.168.0.2:8888")
-	conn, err := net.DialUDP(ctx, "192.168.0.2:8888")
+	// conn, err := net.DialUDP(ctx, "192.168.0.2:8888")
+	conn, err := net.DialUDP(ctx, "192.168.0.2:50000")
 	if err != nil {
 		panic(err)
 	}
 	go func() {
-		data := []byte("hello from my udp client\n")
+		fmt.Println("my udp client start")
+		data := []byte("Hello from my udp client\n")
 		buf := make([]byte, 50)
 		for {
 			l, err := conn.Write(data)
@@ -53,4 +61,6 @@ func main() {
 			}
 		}
 	}()
+	go dev.Handle()
+	dev.Next()
 }

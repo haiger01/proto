@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/spectrex02/proto/ip"
+	"github.com/spectrex02/proto/util"
 )
 
 type UDPDatagram struct {
@@ -58,6 +59,16 @@ func (udpd *UDPDatagram) Serialize() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func (udpd *UDPDatagram) CalculateChecksum() error {
+	data, err := udpd.Serialize()
+	if err != nil {
+		return err
+	}
+	sum := util.Checksum2(data, int(udpd.Header.Length), 0)
+	udpd.Header.Checksum = sum
+	return nil
+}
+
 func BuildUDPDatagram(src, dst uint16, data []byte) (*UDPDatagram, error) {
 	header := UDPHeader{
 		SourcePort:      src,
@@ -65,8 +76,19 @@ func BuildUDPDatagram(src, dst uint16, data []byte) (*UDPDatagram, error) {
 		Length:          uint16(8 + len(data)),
 		Checksum:        0,
 	}
-	return &UDPDatagram{
+	datagram := &UDPDatagram{
 		Header: header,
 		Data:   data,
-	}, nil
+	}
+	err := datagram.CalculateChecksum()
+	if err != nil {
+		return nil, err
+	}
+	return datagram, nil
+}
+
+func (udpd *UDPDatagram) PrintUDPDatagram() {
+	udpd.Header.PrintUDPHeader()
+	fmt.Println(string(udpd.Data))
+	fmt.Println("-----------------------------")
 }

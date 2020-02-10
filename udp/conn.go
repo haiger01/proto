@@ -94,6 +94,7 @@ func (t *Table) Delete(entry *Entry) error {
 func (t *Table) Search(addr *Address) *Entry {
 	t.Mutex.RLock()
 	defer t.Mutex.RUnlock()
+	t.Show()
 	return t.search(addr)
 }
 
@@ -122,6 +123,15 @@ func (t *Table) getAvailablePort(addr ip.IPAddress) uint16 {
 		}
 	}
 	return 0
+}
+
+func (t *Table) Show() {
+	fmt.Println("----port entry table----")
+	for element := t.List.Front(); element != nil; element = element.Next() {
+		entry := element.Value.(*Entry)
+		fmt.Printf("%s:%v\n", entry.Address.String(), entry.Address.Port)
+	}
+	fmt.Println("------------------------")
 }
 
 func (conn *Conn) Port() uint16 {

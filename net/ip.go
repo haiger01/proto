@@ -51,15 +51,17 @@ func (i *IP) Handle(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("failed to create ip packet")
 	}
-	// fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-	// packet.Header.PrintIPHeader()
+	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+	packet.Header.PrintIPHeader()
 	if i.RegisteredProtocol == nil {
 		return fmt.Errorf("next protocols is not registered")
 	}
 	for _, protocol := range i.RegisteredProtocol {
-		err := protocol.Handle(packet.Header.Src.Bytes(), i, packet.Data)
-		if err != nil {
-			return err
+		if protocol.Type() == packet.Header.Protocol {
+			err := protocol.Handle(packet.Header.Src.Bytes(), packet.Header.Dst.Bytes(), i, packet.Data)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -71,10 +73,15 @@ func (i *IP) Write(dst []byte, protocol interface{}, data []byte) (int, error) {
 		return 0, err
 	}
 	packet := ip.BuildIPPacket(i.NetInfo.Address, *d, protocol.(ip.IPProtocol), data)
+	err = packet.ReCalculateChecksum()
+	if err != nil {
+		return 0, err
+	}
 	buf, err := packet.Serialize()
 	if err != nil {
 		return 0, err
 	}
+	packet.Header.PrintIPHeader()
 	return i.Link.Write(i.Link.Dev.Address().Bytes(), ethernet.ETHER_TYPE_IP, buf)
 }
 

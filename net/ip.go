@@ -1,6 +1,7 @@
 package net
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spectrex02/proto/ethernet"
@@ -35,6 +36,16 @@ func (i *IP) RegisterProtocol(protocol NetTransProtocol) error {
 	return nil
 }
 
+func (i *IP) WithValue(ctx context.Context) context.Context {
+	newCtx := ctx
+	for _, protocol := range i.RegisteredProtocol {
+		typ := protocol.Type().String()
+		fmt.Println("add contex with value:", typ)
+		newCtx = context.WithValue(newCtx, typ, protocol)
+	}
+	return newCtx
+}
+
 func (i *IP) Handle(data []byte) error {
 	packet, err := ip.NewIPPacket(data)
 	if err != nil {
@@ -65,4 +76,8 @@ func (i *IP) Write(dst []byte, protocol interface{}, data []byte) (int, error) {
 		return 0, err
 	}
 	return i.Link.Write(i.Link.Dev.Address().Bytes(), ethernet.ETHER_TYPE_IP, buf)
+}
+
+func (i *IP) Address() ip.IPAddress {
+	return i.NetInfo.Address
 }

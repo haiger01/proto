@@ -34,7 +34,7 @@ func (udphdr UDPHeader) PrintUDPHeader() {
 	fmt.Println("-----------------------------")
 }
 
-func NewUDDatagram(data []byte) (*UDPDatagram, error) {
+func NewUDPDatagram(data []byte) (*UDPDatagram, error) {
 	header := &UDPHeader{}
 	buf := bytes.NewBuffer(data)
 	if err := binary.Read(buf, binary.BigEndian, header); err != nil {

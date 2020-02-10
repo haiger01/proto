@@ -3,6 +3,8 @@ package util
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func DisableIPForward() error {
@@ -17,4 +19,23 @@ func DisableIPForward() error {
 		return fmt.Errorf("failed to write: %v", err)
 	}
 	return nil
+}
+
+func ParseAddressAndPort(str string) ([]byte, uint16, error) {
+	// required -> address:port
+	parsed := strings.Split(str, ":")
+	port, err := strconv.Atoi(parsed[1])
+	if err != nil {
+		return nil, 0, err
+	}
+	var addr []byte
+	addrStr := strings.Split(parsed[0], ".")
+	for _, v := range addrStr {
+		a, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, 0, err
+		}
+		addr = append(addr, byte(a))
+	}
+	return addr, uint16(port), nil
 }

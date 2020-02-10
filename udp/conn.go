@@ -16,15 +16,30 @@ type Conn struct {
 	entry *Entry   // Address field in entry fileld has my address and port info
 }
 
+func NewConn(peer *Address, entry *Entry) *Conn {
+	return &Conn{
+		peer:  peer,
+		entry: entry,
+	}
+}
+
 type Entry struct {
-	Queue   chan buffer
+	Queue   chan Buffer
 	Address *Address
 }
 
-type buffer struct {
+type Buffer struct {
 	address ip.IPAddress
 	port    uint16
 	data    []byte
+}
+
+func NewBuffer(addr ip.IPAddress, port uint16, data []byte) Buffer {
+	return Buffer{
+		address: addr,
+		port:    port,
+		data:    data,
+	}
 }
 
 type Table struct {
@@ -57,7 +72,7 @@ func (t *Table) Add(addr *Address) (*Entry, error) {
 		}
 	}
 	newEntry := &Entry{
-		Queue:   make(chan buffer),
+		Queue:   make(chan Buffer),
 		Address: addr,
 	}
 	t.List.PushBack(newEntry)
@@ -114,7 +129,7 @@ func (conn *Conn) Port() uint16 {
 }
 
 func (conn *Conn) Address() ip.IPAddress {
-	return conn.peer.Address.IPAddress
+	return conn.peer.IPAddress
 }
 
 func (conn *Conn) Peer() *Address {

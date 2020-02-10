@@ -112,11 +112,11 @@ func (iphdr *IPHeader) PrintIPHeader() {
 func (ipp IPProtocol) String() string {
 	switch ipp {
 	case IPICMPv4Protocol:
-		return "(ICMP)"
+		return "icmp"
 	case IPTCPProtocol:
-		return "(TCP)"
+		return "tcp"
 	case IPUDPProtocol:
-		return "(UDP)"
+		return "udp"
 	default:
 		return "(UNKNOWN)"
 	}

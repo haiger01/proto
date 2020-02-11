@@ -99,6 +99,7 @@ func (p *PFPacket) RegisterProtocol(protocol LinkNetProtocol) error {
 func (p *PFPacket) Handle() {
 	buffer := make([]byte, p.MTU)
 	// fmt.Printf("%v start handling packet", p.name)
+	fmt.Println("packet handling start")
 	for {
 		_, err := p.Read(buffer)
 		if err != nil {

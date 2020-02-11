@@ -112,11 +112,11 @@ func (iphdr *IPHeader) PrintIPHeader() {
 func (ipp IPProtocol) String() string {
 	switch ipp {
 	case IPICMPv4Protocol:
-		return "(ICMP)"
+		return "icmp"
 	case IPTCPProtocol:
-		return "(TCP)"
+		return "tcp"
 	case IPUDPProtocol:
-		return "(UDP)"
+		return "udp"
 	default:
 		return "(UNKNOWN)"
 	}
@@ -202,7 +202,7 @@ func (ip *IPPacket) ReCalculateChecksum() error {
 func BuildIPPacket(src, dst IPAddress, protocol IPProtocol, data []byte) *IPPacket {
 	//no option
 	header := &IPHeader{
-		VHL:      VerIHL(0x20),
+		VHL:      VerIHL(0x45),
 		TOS:      uint8(0),
 		Length:   uint16(20 + len(data)),
 		Ident:    uint16(0),

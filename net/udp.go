@@ -11,14 +11,14 @@ import (
 
 type UDP struct {
 	// RegisteredProtocol []ApplicationProtocol
-	Table *udp.Table
-	Iface IP
+	table *tcbTable
+	iface IP
 }
 
-func NewUDP(iface IP) *UDP {
+func NewUDP(table *tcbTable, iface IP) *UDP {
 	return &UDP{
-		Table: udp.NewTable(),
-		Iface: iface,
+		table: table,
+		iface: iface,
 	}
 }
 
@@ -41,17 +41,14 @@ func (u *UDP) Handle(src, dst []byte, protocol LinkNetProtocol, data []byte) err
 	if err != nil {
 		return err
 	}
-	addr := &udp.Address{
-		IPAddress: *a,
-		Port:      datagram.Header.DestinationPort,
-	}
-	entry := u.Table.Search(addr)
+	addr := NewAddress(*a, datagram.Header.DestinationPort)
+	entry := u.table.search(addr)
 	if entry == nil {
 		return fmt.Errorf("port is unreachable(%s:%d)\n", addr.String(), addr.Port)
 	}
-	buf := udp.NewBuffer(addr.IPAddress, datagram.Header.DestinationPort, datagram.Data)
+	buf := newBuffer(addr.IPAddress, datagram.Header.DestinationPort, datagram.Data)
 	select {
-	case entry.Queue <- buf:
+	case entry.queue <- buf:
 		fmt.Println(" <- in udp queue")
 		return nil
 	default:
@@ -67,41 +64,49 @@ func (u *UDP) Write(dstAddress []byte, protocol interface{}, data []byte) (int, 
 
 // udpConn fills Conn interface
 type UDPConn struct {
-	conn  *udp.Conn
-	iface IP
+	peer  *Address
+	entry *entry
+	iface *UDP
 }
 
-func NewUDPConn(u *UDP, local, remote *udp.Address) (*UDPConn, error) {
+func NewUDPConn(u *UDP, local, remote *Address) (*UDPConn, error) {
 	if local == nil {
-		local = &udp.Address{
-			IPAddress: u.Iface.Address(),
-			Port:      0,
-		}
+		local = NewAddress(u.iface.Address(), 0)
 	}
-	entry, err := u.Table.Add(local)
+	e, err := u.table.add(local)
 	if err != nil {
 		return nil, err
 	}
 	return &UDPConn{
-		conn:  udp.NewConn(remote, entry),
-		iface: u.Iface,
+		peer:  remote,
+		entry: e,
+		iface: u,
 	}, nil
 }
 
 func (uc *UDPConn) Read(b []byte) (int, error) {
-	return uc.conn.Read(b)
+	l, _, err := uc.ReadFrom(b)
+	return l, err
 }
 
-func (uc *UDPConn) ReadFrom(b []byte) (int, *udp.Address, error) {
-	return uc.conn.ReadFrom(b)
+func (uc *UDPConn) ReadFrom(b []byte) (int, *Address, error) {
+	select {
+	case buf := <-uc.entry.queue:
+		len := copy(b, buf.data)
+		peer := &Address{
+			IPAddress: buf.address,
+			Port:      buf.port,
+		}
+		return len, peer, nil
+	}
 }
 
 func (uc *UDPConn) Write(b []byte) (int, error) {
-	return uc.WriteTo(b, *uc.conn.Peer())
+	return uc.WriteTo(b, *uc.peer)
 }
 
-func (uc *UDPConn) WriteTo(b []byte, dstAddr udp.Address) (int, error) {
-	datagram, err := udp.BuildUDPDatagram(uc.conn.Entry().Address.Port, dstAddr.Port, b)
+func (uc *UDPConn) WriteTo(b []byte, dstAddr Address) (int, error) {
+	datagram, err := udp.BuildUDPDatagram(uc.entry.address.Port, dstAddr.Port, b)
 	if err != nil {
 		return -1, fmt.Errorf("failed to write: %v\n", err)
 	}
@@ -111,11 +116,11 @@ func (uc *UDPConn) WriteTo(b []byte, dstAddr udp.Address) (int, error) {
 	if err != nil {
 		return -1, fmt.Errorf("failed to write: %v\n", err)
 	}
-	return uc.iface.Write(dstAddr.IPAddress.Bytes(), ip.IPUDPProtocol, data)
+	return uc.iface.iface.Write(dstAddr.IPAddress.Bytes(), ip.IPUDPProtocol, data)
 }
 
 func (uc *UDPConn) Close() error {
-	return nil
+	return uc.iface.table.delete(uc.entry)
 }
 
 func DialUDP(ctx context.Context, addr string) (*UDPConn, error) {
@@ -127,14 +132,7 @@ func DialUDP(ctx context.Context, addr string) (*UDPConn, error) {
 	if err != nil {
 		return nil, err
 	}
-	peer := &udp.Address{IPAddress: *ipaddr, Port: port}
-	// var udp *UDP
-	// switch i := ctx.Value("udp").(type) {
-	// case UDP:
-	// udp = &i
-	// default:
-	// return nil, fmt.Errorf("udp is not registered")
-	// }
+	peer := NewAddress(*ipaddr, port)
 	u := ctx.Value("udp").(*UDP)
 	return NewUDPConn(u, nil, peer)
 }
@@ -153,7 +151,6 @@ func ListenUDP(ctx context.Context, addr string) (*UDPConn, error) {
 		return nil, err
 	}
 	ipaddr, err := ip.Address(a)
-	peer := &udp.Address{IPAddress: *ipaddr, Port: port}
-
+	peer := NewAddress(*ipaddr, port)
 	return NewUDPConn(u, peer, nil)
 }

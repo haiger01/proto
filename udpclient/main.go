@@ -45,7 +45,7 @@ func main() {
 	go func() {
 		fmt.Println("my udp client start")
 		data := []byte("Hello from my udp client\n")
-		buf := make([]byte, 50)
+		buf := make([]byte, 128)
 		for {
 			l, err := conn.Write(data)
 			if err != nil {

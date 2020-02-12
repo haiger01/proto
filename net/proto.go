@@ -35,7 +35,8 @@ func SetUp(name, addr string) (context.Context, Device, error) {
 	ip := NewIP(addr, link)
 	icmp := NewICMP()
 	ip.RegisterProtocol(icmp)
-	udp := NewUDP(*ip)
+	table := newTcbTable()
+	udp := NewUDP(table, *ip)
 	ip.RegisterProtocol(udp)
 	err = dev.RegisterProtocol(ip)
 	if err != nil {

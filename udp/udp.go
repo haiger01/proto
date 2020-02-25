@@ -28,8 +28,8 @@ type Address struct {
 
 func (udphdr UDPHeader) PrintUDPHeader() {
 	fmt.Println("---------udp header----------")
-	fmt.Printf("source header = %v\n", udphdr.SourcePort)
-	fmt.Printf("destination header = %v\n", udphdr.DestinationPort)
+	fmt.Printf("source port = %v\n", udphdr.SourcePort)
+	fmt.Printf("destination port = %v\n", udphdr.DestinationPort)
 	fmt.Printf("length = %x\n", udphdr.Length)
 	fmt.Printf("checksum = %x\n", udphdr.Checksum)
 	fmt.Println("-----------------------------")

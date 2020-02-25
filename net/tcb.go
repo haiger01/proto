@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/spectrex02/proto/ip"
+	"github.com/spectrex02/proto/tcp"
 )
 
 // tcb (Transmission Control Block)
@@ -23,6 +24,7 @@ type tcbTable struct {
 type entry struct {
 	queue   chan buffer
 	address *Address
+	cb      *tcp.ControlBlock
 }
 
 type buffer struct {

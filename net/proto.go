@@ -38,6 +38,8 @@ func SetUp(name, addr string) (context.Context, Device, error) {
 	table := newTcbTable()
 	udp := NewUDP(table, *ip)
 	ip.RegisterProtocol(udp)
+	tcp := NewTCP(table, *ip)
+	ip.RegisterProtocol(tcp)
 	err = dev.RegisterProtocol(ip)
 	if err != nil {
 		return nil, nil, err

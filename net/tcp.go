@@ -6,7 +6,6 @@ import (
 
 	"github.com/spectrex02/proto/ip"
 	"github.com/spectrex02/proto/tcp"
-	"github.com/spectrex02/proto/util"
 )
 
 type TCP struct {
@@ -46,13 +45,14 @@ func (t *TCP) Handle(src, dst []byte, protocol LinkNetProtocol, data []byte) err
 	if err != nil {
 		return err
 	}
-	packet.PrintTCPPacket()
+	addr := ip.NewIPAddress(src)
+	// packet.PrintTCPPacket()
 	for element := t.table.list.Front(); element != nil; element = element.Next() {
 		e := element.Value.(*entry)
 		if e.cb == nil {
 			continue
 		}
-		resp, err := e.cb.HandleEvent(packet)
+		resp, err := e.cb.HandleEvent(&addr, packet)
 		if err != nil {
 			return err
 		}
@@ -152,15 +152,10 @@ func (t *TCP) bind(port uint16) (*entry, error) {
 }
 
 func (e *entry) listen() error {
-	e.cb.Mutex.Lock()
-	defer e.cb.Mutex.Unlock()
-	if e.cb.State != tcp.CLOSED {
-		return fmt.Errorf("invalid tcb state:%s", e.cb.State.String())
-	}
-	if e.cb.HostPort == 0 {
-		return fmt.Errorf("host port is no specified")
-	}
-	e.cb.State = tcp.LISTEN
+	addr := e.address.IPAddress
+	cb := tcp.NewControlBlock(&addr, nil, e.address.Port, 0)
+	cb.State = tcp.LISTEN
+	e.cb = cb
 	return nil
 }
 
@@ -173,9 +168,9 @@ func (e *entry) accept() error {
 	return nil
 }
 
-func (e *entry) send(buf []byte) (int, error) {
+// func (e *entry) send(buf []byte) (int, error) {
 
-}
+// }
 
 func (e *entry) recv(buf []byte) (int, error) {
 	// var total int
@@ -190,9 +185,11 @@ func (e *entry) recv(buf []byte) (int, error) {
 		}
 	}
 	copy(buf, e.cb.Window)
+	return len(buf), nil
 }
 
 func ListenTCP(ctx context.Context, addr *Address) (*TCPListener, error) {
+	// addr is local address
 	var t *TCP
 	switch i := ctx.Value("tcp").(type) {
 	case *TCP:
@@ -200,24 +197,34 @@ func ListenTCP(ctx context.Context, addr *Address) (*TCPListener, error) {
 	default:
 		return nil, fmt.Errorf("tcp is not registered")
 	}
-
+	e, err := t.bind(addr.Port)
+	if err != nil {
+		return nil, err
+	}
+	err = e.listen()
+	if err != nil {
+		return nil, err
+	}
+	e.address.Bytes()
+	t.table.show()
+	return nil, nil
 }
 
 // func (t *TCPListener) AcceptTCP() (*TCPConn, error) {
 
 // }
 
-func DialTCP(ctx context.Context, addr string) (*TCPConn, error) {
-	a, port, err := util.ParseAddressAndPort(addr)
-	if err != nil {
-		return nil, err
-	}
-	ipaddr, err := ip.Address(a)
-	if err != nil {
-		return nil, err
-	}
-	peer := NewAddress(*ipaddr, port)
-	t := ctx.Value("tcp").(*TCP)
+// func DialTCP(ctx context.Context, addr string) (*TCPConn, error) {
+// 	a, port, err := util.ParseAddressAndPort(addr)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	ipaddr, err := ip.Address(a)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	peer := NewAddress(*ipaddr, port)
+// 	t := ctx.Value("tcp").(*TCP)
 
-	t.connect()
-}
+// 	t.connect()
+// }

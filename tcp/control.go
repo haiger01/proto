@@ -56,6 +56,15 @@ func (State cbState) String() string {
 	}
 }
 
+func (cb *ControlBlock) Show() {
+	fmt.Println("----- control block ------")
+	fmt.Printf("host address = %v\n", cb.HostAddr.String())
+	fmt.Printf("host port = %v\n", cb.HostPort)
+	fmt.Printf("peer address = %v\n", cb.PeerAddr.String())
+	fmt.Printf("peer port = %v\n", cb.PeerPort)
+	fmt.Printf("state = %v\n", cb.State.String())
+}
+
 func (cb *ControlBlock) CLOSED() {
 	cb.State = CLOSED
 }
@@ -100,14 +109,23 @@ func (cb *ControlBlock) LAST_ACK() {
 	cb.State = LAST_ACK
 }
 
-func (cb *ControlBlock) HandleEvent(packet *TCPPacket) (*TCPPacket, error) {
+func (cb *ControlBlock) HandleEvent(addr *ip.IPAddress, packet *TCPPacket) (*TCPPacket, error) {
 	// implement based on rfc
 	// segment arrives
+	if cb.PeerAddr == nil {
+		cb.PeerAddr = addr
+	}
+	if cb.PeerPort == 0 {
+		cb.PeerPort = packet.Header.SourcePort
+	}
+	fmt.Println("-----handling arriving segment------")
+	packet.Header.PrintTCPHeader()
+	cb.Show()
 	switch cb.State {
 	//if the State is CLOSED
 	case CLOSED:
 		if packet.Header.OffsetControlFlag.ControlFlag().Rst() {
-			return nil, nil
+			return nil, fmt.Errorf("rst is set")
 		}
 		if packet.Header.OffsetControlFlag.ControlFlag().Ack() {
 			// <SEQ=SEG.ACK><CTL=RST>
@@ -131,7 +149,7 @@ func (cb *ControlBlock) HandleEvent(packet *TCPPacket) (*TCPPacket, error) {
 		// first check rst
 		if packet.Header.OffsetControlFlag.ControlFlag().Rst() {
 			// incoming RST should be ignored
-			return nil, nil
+			// return nil, fmt.Errorf("rst is set")
 		}
 		// second check ACK
 		if packet.Header.OffsetControlFlag.ControlFlag().Ack() {
@@ -236,7 +254,7 @@ func (cb *ControlBlock) HandleEvent(packet *TCPPacket) (*TCPPacket, error) {
 				cb.State = TIME_WAIT
 				// pthread_cond_signal
 			}
-			return nil, nil
+			return nil, fmt.Errorf("closing state")
 		}
 	}
 	// TODO sixth check URG
@@ -302,17 +320,17 @@ func (cb *ControlBlock) IsReadySend() bool {
 	}
 }
 
-func (cb *ControlBlock) buildWindow() []byte {
-	buf := make([]byte, 65535)
-	cb.Mutex.Lock()
-	defer cb.Mutex.Unlock()
-	num := len(cb.Window)
-	for i := 0; i < num; i++ {
-		b := <-cb.Window
-		buf = append(buf, b...)
-	}
-	return buf
-}
+// func (cb *ControlBlock) buildWindow() []byte {
+// 	buf := make([]byte, 65535)
+// 	cb.Mutex.Lock()
+// 	defer cb.Mutex.Unlock()
+// 	num := len(cb.Window)
+// 	for i := 0; i < num; i++ {
+// 		b := <-cb.Window
+// 		buf = append(buf, b...)
+// 	}
+// 	return buf
+// }
 
 func NewControlBlock(hostAddr, peerAddr *ip.IPAddress, hostPort, peerPort uint16) *ControlBlock {
 	return &ControlBlock{

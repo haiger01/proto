@@ -27,8 +27,8 @@ func (a *ARP) Handle(data []byte) error {
 	if err != nil {
 		return fmt.Errorf("failed to create ARP packet")
 	}
-	// fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
-	// packet.String()
+	fmt.Println("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+	packet.String()
 	if packet.Header.HardwareType != arp.HARDWARE_ETHERNET {
 		return fmt.Errorf("invalid hardware type")
 	}
